@@ -65,7 +65,7 @@ Lets create the model architecture. The architecture is described below:
 
 Input and Output layers:
 
-- One Input layer with dimentions 160, 160, 30, 1
+- One Input layer with dimentions 120, 120, 30, 1
 - Output layer with dimentions 5
 
 Convolutions :
@@ -80,7 +80,7 @@ MLP (Multi Layer Perceptron) architecture:
 
 ```python
 ## input layer
-input_layer = Input((150, 150, 30, 3))
+input_layer = Input((120, 120, 30, 3))
 
 ## convolutional layers
 conv_layer1 = Conv3D(filters=8, kernel_size=(3, 3, 3), activation='relu')(input_layer)
