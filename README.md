@@ -52,6 +52,65 @@ One is the standard **CNN + RNN** architecture in which you pass the images of a
 
 The other popular architecture used to process videos is a natural extension of CNNs - a **3D convolutional network**. In this project, we will try both these architectures.
 
+## Data Agumentation
+
+We have a total of 600+ for test set and 100 sampels for validation set. We will increase this 2 fold by usign a simple agumentiaton technique of affine transforamtion.
+
+### Affine Transformation
+
+In affine transformation, all parallel lines in the original image will still be parallel in the output image. To find the transformation matrix, we need three points from input image and their corresponding locations in output image. Then cv2.getAffineTransform will create a 2x3 matrix which is to be passed to cv2.warpAffine.
+
+Check below example, and also look at the points I selected (which are marked in Green color):
+
+``` python
+img = cv2.imread('drawing.png')
+rows,cols,ch = img.shape
+
+pts1 = np.float32([[50,50],[200,50],[50,200]])
+pts2 = np.float32([[10,100],[200,50],[100,250]])
+
+M = cv2.getAffineTransform(pts1,pts2)
+
+dst = cv2.warpAffine(img,M,(cols,rows))
+
+plt.subplot(121),plt.imshow(img),plt.title('Input')
+plt.subplot(122),plt.imshow(dst),plt.title('Output')
+plt.show()
+```
+
+See the result:
+
+![affine transform](./images/affine_transform.png)
+
+
+We will perform a same random affine transform for all the images in the frameset. This way we are generating new dataset from existing dataset.
+
+## Data Preprocessing
+
+We can apply several of the image procesing techniques for each of image in the frame.
+
+One primary image processing we will apply is the resize. We will convert each image of the train and test set into a matrix of size 120*120
+
+![resize](./images/resize_image.png)
+
+We will also experiemnt with edge detection for image processing
+
+![edge detection](./images/edge_detect.png)
+
+### Sobel Edge Detection
+Sobel edge detector is a gradient based method based on the first order derivatives. It calculates the first derivatives of the image separately for the X and Y axes.
+
+https://en.wikipedia.org/wiki/Sobel_operator
+
+### Laplacian Edge Detection
+Unlike the Sobel edge detector, the Laplacian edge detector uses only one kernel. It calculates second order derivatives in a single pass.
+
+## Generators
+
+**Understanding Generators**: As you already know, in most deep learning projects you need to feed data to the model in batches. This is done using the concept of generators. 
+
+Creating data generators is probably the most important part of building a training pipeline. Although libraries such as Keras provide builtin generator functionalities, they are often restricted in scope and you have to write your own generators from scratch. In this project we will implement our own cutom generator, our generator will feed batches of videos, not images. 
+
 
 # Implementation 
 
@@ -59,13 +118,15 @@ The other popular architecture used to process videos is a natural extension of 
 
 Now, lets implement a 3D convolutional Neural network on this dataset. To use 2D convolutions, we first convert every image into a 3D shape : width, height, channels. Channels represents the slices of Red, Green, and Blue layers. So it is set as 3. In the similar manner, we will convert the input dataset into 4D shape in order to use 3D convolution for : length, breadth, height, channel (r/g/b).
 
-*Note:* even though the input images are rgb (3 channel), we will perform image processing on each frame and the end individual frame will be grayscale (1 channel)
+*Note:* even though the input images are rgb (3 channel), we will perform image processing on each frame and the end individual frame will be grayscale (1 channel) for some models
 
 Lets create the model architecture. The architecture is described below:
 
+## Model #1
+
 Input and Output layers:
 
-- One Input layer with dimentions 120, 120, 30, 1
+- One Input layer with dimentions 30, 120, 120, 1
 - Output layer with dimentions 5
 
 Convolutions :
@@ -80,7 +141,7 @@ MLP (Multi Layer Perceptron) architecture:
 
 ```python
 ## input layer
-input_layer = Input((120, 120, 30, 3))
+input_layer = Input((30, 120, 120, 3))
 
 ## convolutional layers
 conv_layer1 = Conv3D(filters=8, kernel_size=(3, 3, 3), activation='relu')(input_layer)
@@ -109,8 +170,4 @@ output_layer = Dense(units=5, activation='softmax')(dense_layer2)
 model = Model(inputs=input_layer, outputs=output_layer)
 ```
 
-## Data Preprocessing
-
-We need to covert the color images to grayscale images have pixel values that range from 0 to 255. Also, these images have varied dimension 360*360 and 120*160. As a result, you'll need to preprocess the data before you feed it into the model.
-
-As a first step, convert each image of the train and test set into a matrix of size 120*120, followed by some image thresholding and finally to a grayscale image.
+![Model 1 summary](./images/model_1_summary.png)
