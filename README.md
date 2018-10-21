@@ -95,6 +95,10 @@ Edge detection Blue channel
 Edge detection 
 ![edge detection](./images/edge_detect_all.png)
 
+### Normalization
+
+We will use mean normaliztion for each of the channel in the image.
+
 ## Data Agumentation
 
 We have a total of 600+ for test set and 100 sampels for validation set. We will increase this 2 fold by usign a simple agumentiaton technique of affine transforamtion.
@@ -156,9 +160,9 @@ Note: this also covers the case, where in batch size is day 30 and we have only 
 
 ## Reading Video as Frames
 
-Note that in our project, each gesture is a broken into indivdual frame. Each esture consists of 30 individual frames. While loading this data in the generator this is need to sort the frames if we want to maintain the temporal inforamtion.
+Note that in our project, each gesture is a broken into indivdual frame. Each gesture consists of 30 individual frames. While loading this data via the generator there is need to sort the frames if we want to maintain the temporal information.
 
-The order of the images loaded might be random and so it is necessary to use the sort on the list of files before reading each frame.
+The order of the images loaded might be random and so it is necessary to apply sort on the list of files before reading each frame.
 
 
 # Implementation 
@@ -171,19 +175,184 @@ Now, lets implement a 3D convolutional Neural network on this dataset. To use 2D
 
 Lets create the model architecture. The architecture is described below:
 
+While we tried with multiple ***filter size***, bigger filter size is resource intensive and we have done most experiment with 3*3 filter
+
+We have used **Adam** optimizer with its default settings.
+We have additionally used the ReduceLROnPlateau to reduce our learning alpha after 2 epoch on the result plateauing.
+
+
 ## Model #1
+
+Build a 3D convolutional network, based loosely on C3D.
+
+https://arxiv.org/pdf/1412.0767.pdf
+
+```python
+
+        model = Sequential()
+        model.add(Conv3D( 8, (3,3,3), activation='relu', input_shape=input_shape ))
+        model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2)))
+        model.add(Conv3D(16, (3,3,3), activation='relu'))
+        model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2)))
+        model.add(Conv3D(32, (3,3,3), activation='relu'))
+        model.add(Conv3D(32, (3,3,3), activation='relu'))
+        model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2)))
+        model.add(Conv3D(64, (2,2,2), activation='relu'))
+        model.add(Conv3D(64, (2,2,2), activation='relu'))
+        model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2)))
+
+        model.add(Flatten())
+        model.add(Dense(512))
+        model.add(Dropout(0.5))
+        model.add(Dense(256))
+        model.add(Dropout(0.5))
+        model.add(Dense(nb_classes, activation='softmax'))
+```
+Model Summary
 
 ![Model 1 summary](./images/Model1.png)
 
 ## Model #2
 
+Build a 3D convolutional network, aka C3D.
+
+https://arxiv.org/pdf/1412.0767.pdf
+```python
+        model = Sequential()
+        # 1st layer group
+        model.add(Conv3D(16, 3, 3, 3, activation='relu',
+                         padding='same', name='conv1',
+                         subsample=(1, 1, 1),
+                         input_shape=input_shape))
+        model.add(MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2),
+                               border_mode='valid', name='pool1'))
+        # 2nd layer group
+        model.add(Conv3D(32, 3, 3, 3, activation='relu',
+                         padding='same', name='conv2',
+                         subsample=(1, 1, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
+                               border_mode='valid', name='pool2'))
+        # 3rd layer group
+        model.add(Conv3D(64, 3, 3, 3, activation='relu',
+                         padding='same', name='conv3a',
+                         subsample=(1, 1, 1)))
+        model.add(Conv3D(64, 3, 3, 3, activation='relu',
+                         padding='same', name='conv3b',
+                         subsample=(1, 1, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
+                               border_mode='valid', name='pool3'))
+        # 4th layer group
+        model.add(Conv3D(128, 3, 3, 3, activation='relu',
+                         padding='same', name='conv4a',
+                         subsample=(1, 1, 1)))
+        model.add(Conv3D(128, 3, 3, 3, activation='relu',
+                         padding='same', name='conv4b',
+                         subsample=(1, 1, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
+                               border_mode='valid', name='pool4'))
+
+        # 5th layer group
+        model.add(Conv3D(256, 3, 3, 3, activation='relu',
+                         padding='same', name='conv5a',
+                         subsample=(1, 1, 1)))
+        model.add(Conv3D(256, 3, 3, 3, activation='relu',
+                         padding='same', name='conv5b',
+                         subsample=(1, 1, 1)))
+        model.add(ZeroPadding3D(padding=(0, 1, 1)))
+        model.add(MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2),
+                               padding='valid', name='pool5'))
+        model.add(Flatten())
+
+        # FC layers group
+        model.add(Dense(512, activation='relu', name='fc6'))
+        model.add(Dropout(0.5))
+        model.add(Dense(512, activation='relu', name='fc7'))
+        model.add(Dropout(0.5))
+        model.add(Dense(nb_classes, activation='softmax'))
+```
+Model Summary
+
 ![Model 2 summary](./images/Model2.png)
 
 ## Model #3
 
+Custom model
+``` python
+        model = Sequential()
+        model.add(Conv3D(16, kernel_size=(3, 3, 3), input_shape=input_shape, padding='same'))
+        model.add(Activation('relu'))
+        model.add(Conv3D(16, padding="same", kernel_size=(3, 3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling3D(pool_size=(3, 3, 3), padding="same"))
+        model.add(Dropout(0.25))
+
+        model.add(Conv3D(32, padding="same", kernel_size=(3, 3, 3)))
+        model.add(Activation('relu'))
+        model.add(Conv3D(32, padding="same", kernel_size=(3, 3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling3D(pool_size=(3, 3, 3), padding="same"))
+        model.add(Dropout(0.25))
+
+        model.add(Conv3D(32, padding="same", kernel_size=(3, 3, 3)))
+        model.add(Activation('relu'))
+        model.add(Conv3D(32, padding="same", kernel_size=(3, 3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling3D(pool_size=(3, 3, 3), padding="same"))
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+        model.add(Dense(512, activation='relu'))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
+        model.add(Dense(nb_classes, activation='softmax'))
+```
+
+Model Summary
+
 ![Model 3 summary](./images/Model3.png)
 
 ## Model #4
+```python
+        model = Sequential()
+
+        model.add(Conv3D(8, kernel_size=(3,3,3), input_shape=input_shape, padding='same'))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(16, kernel_size=(3,3,3), padding='same'))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(32, kernel_size=(1,3,3), padding='same'))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(64, kernel_size=(1,3,3), padding='same'))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.25))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        #Flatten Layers
+        model.add(Flatten())
+
+        model.add(Dense(256, activation='relu'))
+        model.add(Dropout(0.5))
+
+        model.add(Dense(128, activation='relu'))
+        model.add(Dropout(0.5))
+
+        #softmax layer
+        model.add(Dense(5, activation='softmax'))
+```
+
+Model Summary
 
 ![Model 4 summary](./images/Model4.png)
 
@@ -203,5 +372,50 @@ MLP (Multi Layer Perceptron) architecture:
 
 - Batch normalization on convolutiona architecture
 - Dense layers with 2 layers followed by dropout to avoid overfitting
+
+```python
+        model = Sequential()
+
+        model.add(Conv3D(8, kernel_size=(3,3,3), input_shape=input_shape, padding='same'))
+        #model.add(BatchNormalization())
+        model.add(Activation('relu'))
+        model.add(Dropout(0.25))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(16, kernel_size=(3,3,3), padding='same'))
+        #model.add(BatchNormalization())
+        model.add(Activation('relu'))
+        model.add(Dropout(0.25))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(32, kernel_size=(1,3,3), padding='same'))
+        #model.add(BatchNormalization())
+        model.add(Activation('relu'))
+        model.add(Dropout(0.25))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        model.add(Conv3D(64, kernel_size=(1,3,3), padding='same'))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.25))
+
+        model.add(MaxPooling3D(pool_size=(2,2,2)))
+
+        #Flatten Layers
+        model.add(Flatten())
+
+        model.add(Dense(256, activation='relu'))
+        model.add(Dropout(0.5))
+
+        model.add(Dense(128, activation='relu'))
+        model.add(Dropout(0.5))
+
+        #softmax layer
+        model.add(Dense(5, activation='softmax'))
+```
+
+Model Summary
 
 ![Model 5 summary](./images/Model5.png)
