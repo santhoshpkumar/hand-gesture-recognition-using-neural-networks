@@ -66,7 +66,7 @@ We can apply several of the image procesing techniques for each of image in the 
 
 Given that one of the data set is of rectangualr shape, we will crop that image to 120*120, this is different to resize, while resize changes the aspect ratio of rectangular image. In cropping we will center crop the image to retain the middle of the frame.
 
-![cropped](./images/crop_image.png)
+![cropped](./images/cropped_image.png)
 
 ### Edge Detection
 We will also experiemnt with edge detection for image processing
@@ -80,6 +80,20 @@ https://en.wikipedia.org/wiki/Sobel_operator
 
 #### Laplacian Edge Detection
 Unlike the Sobel edge detector, the Laplacian edge detector uses only one kernel. It calculates second order derivatives in a single pass.
+
+We will perform edge detection on each channel and use the comibined 3 channel as input 
+
+Edge detection Red channel
+![edge detection](./images/edge_detect_r.png)
+
+Edge detection Green channel
+![edge detection](./images/edge_detect_g.png)
+
+Edge detection Blue channel
+![edge detection](./images/edge_detect_b.png)
+
+Edge detection 
+![edge detection](./images/edge_detect_all.png)
 
 ## Data Agumentation
 
@@ -119,6 +133,8 @@ We will perform a same random affine transform for all the images in the framese
 Note that fliiping images horizontally comes with special cavet, we need to swap the left swipe <-> right swipe as we flip the image.
 This technique of image augmentation adds more generalization to the dataset.
 
+![flip image](./images/flipped_image.png)
+
 ## Generators
 
 **Understanding Generators**: As you already know, in most deep learning projects you need to feed data to the model in batches. This is done using the concept of generators. 
@@ -128,9 +144,9 @@ Creating data generators is probably the most important part of building a train
 Let's take an example, assume we have 23 samples and we pick batch size as 10.
 
 In this case there will be 2 complete batches of ten each
-Batch 1: 10
-Batch 2: 10
-Batch 3: 3
+- Batch 1: 10
+- Batch 2: 10
+- Batch 3: 3
 
 The final run will be for the remaining batch that was not part of the the full batch. 
 
