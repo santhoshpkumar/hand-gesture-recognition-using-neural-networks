@@ -52,6 +52,35 @@ One is the standard **CNN + RNN** architecture in which you pass the images of a
 
 The other popular architecture used to process videos is a natural extension of CNNs - a **3D convolutional network**. In this project, we will try both these architectures.
 
+## Data Preprocessing
+
+We can apply several of the image procesing techniques for each of image in the frame.
+
+### Resize
+
+ We will convert each image of the train and test set into a matrix of size 120*120
+
+![resize](./images/resize_image.png)
+
+### Cropping
+
+Given that one of the data set is of rectangualr shape, we will crop that image to 120*120, this is different to resize, while resize changes the aspect ratio of rectangular image. In cropping we will center crop the image to retain the middle of the frame.
+
+![cropped](./images/crop_image.png)
+
+### Edge Detection
+We will also experiemnt with edge detection for image processing
+
+![edge detection](./images/edge_detect.png)
+
+#### Sobel Edge Detection
+Sobel edge detector is a gradient based method based on the first order derivatives. It calculates the first derivatives of the image separately for the X and Y axes.
+
+https://en.wikipedia.org/wiki/Sobel_operator
+
+#### Laplacian Edge Detection
+Unlike the Sobel edge detector, the Laplacian edge detector uses only one kernel. It calculates second order derivatives in a single pass.
+
 ## Data Agumentation
 
 We have a total of 600+ for test set and 100 sampels for validation set. We will increase this 2 fold by usign a simple agumentiaton technique of affine transforamtion.
@@ -85,31 +114,35 @@ See the result:
 
 We will perform a same random affine transform for all the images in the frameset. This way we are generating new dataset from existing dataset.
 
-## Data Preprocessing
+### Flipping Images Horizontally
 
-We can apply several of the image procesing techniques for each of image in the frame.
-
-One primary image processing we will apply is the resize. We will convert each image of the train and test set into a matrix of size 120*120
-
-![resize](./images/resize_image.png)
-
-We will also experiemnt with edge detection for image processing
-
-![edge detection](./images/edge_detect.png)
-
-### Sobel Edge Detection
-Sobel edge detector is a gradient based method based on the first order derivatives. It calculates the first derivatives of the image separately for the X and Y axes.
-
-https://en.wikipedia.org/wiki/Sobel_operator
-
-### Laplacian Edge Detection
-Unlike the Sobel edge detector, the Laplacian edge detector uses only one kernel. It calculates second order derivatives in a single pass.
+Note that fliiping images horizontally comes with special cavet, we need to swap the left swipe <-> right swipe as we flip the image.
+This technique of image augmentation adds more generalization to the dataset.
 
 ## Generators
 
 **Understanding Generators**: As you already know, in most deep learning projects you need to feed data to the model in batches. This is done using the concept of generators. 
 
 Creating data generators is probably the most important part of building a training pipeline. Although libraries such as Keras provide builtin generator functionalities, they are often restricted in scope and you have to write your own generators from scratch. In this project we will implement our own cutom generator, our generator will feed batches of videos, not images. 
+
+Let's take an example, assume we have 23 samples and we pick batch size as 10.
+
+In this case there will be 2 complete batches of ten each
+Batch 1: 10
+Batch 2: 10
+Batch 3: 3
+
+The final run will be for the remaining batch that was not part of the the full batch. 
+
+Full batches are covered as part of the for loop the remainder are covered post the for loop.
+
+Note: this also covers the case, where in batch size is day 30 and we have only 23 samples. In this case there will be only one single batch with 23 samples.
+
+## Reading Video as Frames
+
+Note that in our project, each gesture is a broken into indivdual frame. Each esture consists of 30 individual frames. While loading this data in the generator this is need to sort the frames if we want to maintain the temporal inforamtion.
+
+The order of the images loaded might be random and so it is necessary to use the sort on the list of files before reading each frame.
 
 
 # Implementation 
@@ -123,6 +156,22 @@ Now, lets implement a 3D convolutional Neural network on this dataset. To use 2D
 Lets create the model architecture. The architecture is described below:
 
 ## Model #1
+
+![Model 1 summary](./images/Model1.png)
+
+## Model #2
+
+![Model 2 summary](./images/Model2.png)
+
+## Model #3
+
+![Model 3 summary](./images/Model3.png)
+
+## Model #4
+
+![Model 4 summary](./images/Model4.png)
+
+## Model #5
 
 Input and Output layers:
 
@@ -139,35 +188,4 @@ MLP (Multi Layer Perceptron) architecture:
 - Batch normalization on convolutiona architecture
 - Dense layers with 2 layers followed by dropout to avoid overfitting
 
-```python
-## input layer
-input_layer = Input((30, 120, 120, 3))
-
-## convolutional layers
-conv_layer1 = Conv3D(filters=8, kernel_size=(3, 3, 3), activation='relu')(input_layer)
-conv_layer2 = Conv3D(filters=16, kernel_size=(3, 3, 3), activation='relu')(conv_layer1)
-
-## add max pooling to obtain the most imformatic features
-pooling_layer1 = MaxPool3D(pool_size=(2, 2, 2))(conv_layer2)
-
-conv_layer3 = Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu')(pooling_layer1)
-conv_layer4 = Conv3D(filters=64, kernel_size=(3, 3, 3), activation='relu')(conv_layer3)
-pooling_layer2 = MaxPool3D(pool_size=(2, 2, 2))(conv_layer4)
-
-## perform batch normalization on the convolution outputs before feeding it to MLP architecture
-pooling_layer2 = BatchNormalization()(pooling_layer2)
-flatten_layer = Flatten()(pooling_layer2)
-
-## create an MLP architecture with dense layers :  500 -> 50 -> 5
-## add dropouts to avoid overfitting / perform regularization
-dense_layer1 = Dense(units=500, activation='relu')(flatten_layer)
-dense_layer1 = Dropout(0.4)(dense_layer1)
-dense_layer2 = Dense(units=50, activation='relu')(dense_layer1)
-dense_layer2 = Dropout(0.4)(dense_layer2)
-output_layer = Dense(units=5, activation='softmax')(dense_layer2)
-
-## define the model with input layer and output layer
-model = Model(inputs=input_layer, outputs=output_layer)
-```
-
-![Model 1 summary](./images/model_1_summary.png)
+![Model 5 summary](./images/Model5.png)
