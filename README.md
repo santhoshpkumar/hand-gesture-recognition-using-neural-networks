@@ -360,7 +360,7 @@ Model Summary
 
 Input and Output layers:
 
-- One Input layer with dimentions 30, 120, 120, 1
+- One Input layer with dimentions 30, 120, 120, 3
 - Output layer with dimentions 5
 
 Convolutions :
@@ -377,21 +377,21 @@ MLP (Multi Layer Perceptron) architecture:
         model = Sequential()
 
         model.add(Conv3D(8, kernel_size=(3,3,3), input_shape=input_shape, padding='same'))
-        #model.add(BatchNormalization())
+        model.add(BatchNormalization())
         model.add(Activation('relu'))
         model.add(Dropout(0.25))
 
         model.add(MaxPooling3D(pool_size=(2,2,2)))
 
         model.add(Conv3D(16, kernel_size=(3,3,3), padding='same'))
-        #model.add(BatchNormalization())
+        model.add(BatchNormalization())
         model.add(Activation('relu'))
         model.add(Dropout(0.25))
 
         model.add(MaxPooling3D(pool_size=(2,2,2)))
 
         model.add(Conv3D(32, kernel_size=(1,3,3), padding='same'))
-        #model.add(BatchNormalization())
+        model.add(BatchNormalization())
         model.add(Activation('relu'))
         model.add(Dropout(0.25))
 
@@ -419,3 +419,8 @@ MLP (Multi Layer Perceptron) architecture:
 Model Summary
 
 ![Model 5 summary](./images/Model5.png)
+
+Model 5 gave us **test accuracy of 87% and validation accuracy of 87%** using all the 30 frames. The same model is submitted for the review. 
+While we did try model lesser frames by using even frames but we felt more comfortable using full frame. Cropping and other preprocessing also did not affect much on the final accuracy.
+
+Link to modle ->  https://drive.google.com/open?id=12wMsLnLGYWCK9B9AKIfoGjxx5pZkRr3h
