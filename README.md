@@ -1,5 +1,11 @@
 # Hand gesture recognition using neural networks
 
+## Developers
+
+Santhosh Kumar [https://www.linkedin.com/in/santhoshkumar/]
+
+Sanyog Yadav [https://www.linkedin.com/in/sanyog-yadav-cfa-3b655550/]
+
 ## Problem Statement
 
 Imagine you are working as a data scientist at a home electronics company which manufactures state of the art smart televisions. You want to develop a cool feature in the smart-TV that can recognise five different gestures performed by the user which will help users control the TV without using a remote.
