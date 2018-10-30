@@ -4,7 +4,7 @@
 
 Santhosh Kumar [https://www.linkedin.com/in/santhoshkumar/]
 
-Sanyog Yadav [https://www.linkedin.com/in/sanyog-yadav-cfa-3b655550/]
+Sanyog Yadav [https://www.linkedin.com/in/sanyog-yadav-cfa]
 
 ## Problem Statement
 
